@@ -147,6 +147,17 @@ export function initUI(handlers = {}) {
     document.body?.classList.toggle('drawer-open');
   });
 
+  $('#drawer-backdrop')?.addEventListener('click', () => {
+    document.body?.classList.remove('drawer-open');
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.body?.classList.remove('drawer-open');
+      document.body?.classList.remove('legend-open');
+    }
+  });
+
   document.querySelectorAll('#color-mode .seg-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#color-mode .seg-btn')

@@ -706,6 +706,7 @@ body.loading .spinner {
 #map-pane {
   position: relative;
   min-width: 0;
+  isolation: isolate;
 }
 
 #map {
@@ -768,6 +769,10 @@ body.loading .spinner {
   border-radius: 999px;
   padding: 6px 14px 6px 6px;
   box-shadow: var(--shadow-card);
+}
+
+#legend-toggle {
+  display: none;
 }
 
 .radar-toggle {
@@ -966,7 +971,7 @@ input[type="range"]:disabled::-moz-range-track {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 14;
+  z-index: 1150;
   opacity: 0;
   transition: opacity 0.25s ease;
 }
@@ -979,10 +984,16 @@ input[type="range"]:disabled::-moz-range-track {
     grid-template-areas:
       "header"
       "map";
+    overflow-x: hidden;
   }
 
   .menu-btn {
     display: inline-flex;
+  }
+
+  #app-header {
+    position: relative;
+    z-index: 1250;
   }
 
   #sidebar {
@@ -994,6 +1005,8 @@ input[type="range"]:disabled::-moz-range-track {
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.35);
+    z-index: 1200;
+    background: var(--surface);
   }
 
   body.drawer-open #sidebar {
@@ -1003,6 +1016,81 @@ input[type="range"]:disabled::-moz-range-track {
   body.drawer-open .drawer-backdrop {
     display: block;
     opacity: 1;
+  }
+
+  /* ---- Map legend: collapsed behind a toggle pill on mobile ---- */
+
+  #map-legend {
+    display: none;
+    z-index: 600;
+    max-height: 42vh;
+    overflow-y: auto;
+    max-width: 240px;
+    left: 12px;
+    right: auto;
+    bottom: calc(108px + env(safe-area-inset-bottom));
+  }
+
+  #legend-toggle {
+    display: block;
+    position: absolute;
+    left: 12px;
+    right: auto;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    top: auto;
+    transform: none;
+    z-index: 610;
+    padding: 7px 14px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  body.legend-open #map-legend {
+    display: block;
+  }
+
+  body.legend-open #legend-toggle {
+    border-color: var(--accent);
+    background: rgba(57, 135, 229, 0.16);
+    color: var(--text-primary);
+  }
+
+  /* ---- Radar bar: near full-width on mobile ---- */
+
+  #radar-bar {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    gap: 8px;
+    padding: 5px 10px 5px 5px;
+  }
+
+  #radar-slider {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  /* ---- Touch targets ---- */
+
+  .icon-btn, .seg-btn, .chip {
+    min-height: 40px;
+  }
+
+  #btn-menu {
+    width: 44px;
+    height: 44px;
+  }
+
+  .station-row, .alert-row {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  select#state-filter {
+    min-height: 40px;
   }
 }
 

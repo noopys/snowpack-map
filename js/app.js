@@ -268,6 +268,7 @@ function init() {
   });
   ui.setStateOptions(SNOTEL_STATES);
   initRadarBar();
+  document.getElementById('legend-toggle')?.addEventListener('click', () => document.body.classList.toggle('legend-open'));
   setRadarControlsEnabled(false);
   refreshAll();
 }
