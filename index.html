@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Snowfield — US Snowpack &amp; Storm Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='24' font-size='26' text-anchor='middle'%3E%E2%9D%84%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('snowfield-theme');
+      var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
+</head>
+<body>
+<div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+<header id="app-header">
+  <button type="button" id="btn-menu" class="icon-btn menu-btn" aria-label="Toggle menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M3 5H17M3 10H17M3 15H17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="brand">
+    <span class="brand-glyph" aria-hidden="true">❄</span>
+    <div class="brand-text">
+      <h1>Snowfield</h1>
+      <span class="brand-sub">US snowpack &amp; storms</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="last-updated" class="muted-text">–</span>
+    <button type="button" id="btn-refresh" class="icon-btn" aria-label="Refresh">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.87M13.5 2.5v3.5H10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="icon-btn-label">Refresh</span>
+    </button>
+    <button type="button" id="btn-theme" class="icon-btn" aria-label="Toggle theme">
+      <span id="theme-icon" aria-hidden="true">☀</span>
+    </button>
+  </div>
+</header>
+
+<aside id="sidebar">
+
+  <section id="view-overview">
+
+    <div id="kpi-grid" class="kpi-grid">
+      <div id="kpi-stations" class="stat-tile">
+        <span class="stat-label">Stations reporting</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+      <div id="kpi-normal" class="stat-tile">
+        <span class="stat-label">% of normal</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+      <div id="kpi-winter" class="stat-tile">
+        <span class="stat-label">Winter alerts</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+      <div id="kpi-alerts" class="stat-tile">
+        <span class="stat-label">Total alerts</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+    </div>
+
+    <section id="sec-snow" class="side-section">
+      <h2 class="sec-title">Snowpack</h2>
+
+      <div id="color-mode" class="seg-control" role="group" aria-label="Color mode">
+        <button type="button" class="seg-btn active" data-mode="pct">% of normal</button>
+        <button type="button" class="seg-btn" data-mode="swe">Snow depth (SWE)</button>
+      </div>
+
+      <select id="state-filter" class="select">
+        <option value="">All states</option>
+      </select>
+
+      <ol id="top-stations" class="station-list"></ol>
+    </section>
+
+    <section id="sec-alerts" class="side-section">
+      <h2 class="sec-title">Storm alerts</h2>
+
+      <div id="alert-chips" class="chip-row"></div>
+
+      <ul id="alert-list" class="alert-list"></ul>
+
+      <div id="alert-empty" class="empty-state" hidden>No active alerts match filters</div>
+    </section>
+
+    <div id="status-bar">
+      <span class="spinner" aria-hidden="true"></span>
+      <span id="status-text">Loading…</span>
+    </div>
+
+  </section>
+
+  <section id="view-station" hidden>
+    <button type="button" id="btn-back" class="ghost-btn">← All stations</button>
+
+    <h2 id="station-name"></h2>
+    <div id="station-meta" class="muted-text"></div>
+
+    <div id="station-stats" class="station-stats">
+      <div id="st-swe" class="stat-tile">
+        <span class="stat-label">SWE</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+      <div id="st-depth" class="stat-tile">
+        <span class="stat-label">Depth</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+      <div id="st-pct" class="stat-tile">
+        <span class="stat-label">% of normal</span>
+        <span class="stat-value">–</span>
+        <span class="stat-sub"></span>
+      </div>
+    </div>
+
+    <div id="spark-card" class="card">
+      <h3 class="sec-title">Snow water equivalent — last 120 days</h3>
+      <div id="sparkline"></div>
+      <div id="spark-legend" class="spark-legend">
+        <span class="legend-item">
+          <span class="legend-swatch swatch-line"></span> This year
+        </span>
+        <span class="legend-item">
+          <span class="legend-swatch swatch-dashed"></span> Median (30-yr)
+        </span>
+      </div>
+    </div>
+
+    <div id="station-note" class="muted-text"></div>
+  </section>
+
+</aside>
+
+<main id="map-pane">
+  <div id="map"></div>
+
+  <div id="map-legend" class="overlay-card"></div>
+
+  <div id="radar-bar" class="overlay-pill">
+    <button type="button" id="btn-radar-toggle" class="chip radar-toggle" aria-label="Toggle radar">
+      <span aria-hidden="true">📡</span> Radar
+    </button>
+    <button type="button" id="btn-radar-play" class="icon-btn radar-play" aria-label="Play radar animation" disabled>▶</button>
+    <input type="range" id="radar-slider" min="0" value="0" disabled aria-label="Radar frame">
+    <span id="radar-time" class="radar-time">–</span>
+  </div>
+</main>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
